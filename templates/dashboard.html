@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .card { border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; }
+        .bar { height: 20px; background: #eee; border-radius: 5px; }
+        .fill { height: 100%; background: #4caf50; }
+    </style>
+</head>
+<body>
+
+<h1>📊 Dashboard</h1>
+
+<div class="card">
+    <p>Total Tasks: {{ total_tasks }}</p>
+    <p>Completed: {{ completed_tasks }}</p>
+    <p>Pending: {{ pending_tasks }}</p>
+    <p>Missed: {{ missed_tasks }}</p>
+</div>
+
+<div class="card">
+    <h3>Overall Progress</h3>
+    <div class="bar">
+        <div class="fill" style="width: {{ completion_percentage }}%"></div>
+    </div>
+    <p>{{ completion_percentage }}%</p>
+</div>
+
+<h3>📘 Subject-wise Progress</h3>
+
+{% for subject, data in subject_progress.items() %}
+<div class="card">
+    <strong>{{ subject }}</strong>
+    <div class="bar">
+        <div class="fill" style="width: {{ data.percentage }}%"></div>
+    </div>
+    <p>{{ data.percentage }}%</p>
+</div>
+{% endfor %}
+
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Exam Date</title>
+</head>
+<body>
+
+<h2>Add / Update Exam Date</h2>
+
+<form method="POST">
+
+    <select name="subject_id" required>
+        <option value="">Select Subject</option>
+        {% for subject in subjects %}
+            <option value="{{ subject.id }}">{{ subject.name }}</option>
+        {% endfor %}
+    </select>
+
+    <br><br>
+
+    <input type="date" name="exam_date" required>
+
+    <br><br>
+
+    <button type="submit">Save Exam Date</button>
+
+</form>
+
+</body>
+</html>

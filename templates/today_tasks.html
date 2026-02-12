@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Today's Tasks</title>
+</head>
+<body>
+
+<h2>📅 Today's Study Tasks</h2>
+
+{% if tasks %}
+    <ul>
+        {% for task in tasks %}
+            <li>
+                <strong>{{ task.subject.name }}</strong> —
+                {{ task.topic.name }}
+
+                {% if not task.is_completed %}
+                    <form method="GET"
+                          action="/complete-task/{{ task.id }}"
+                          style="display:inline;">
+                        <button type="submit">Mark Completed</button>
+                    </form>
+                {% else %}
+                    ✅ Completed
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No tasks for today 🎉</p>
+{% endif %}
+
+</body>
+</html>

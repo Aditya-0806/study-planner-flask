@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Topic</title>
+</head>
+<body>
+
+<h2>Add Topic</h2>
+
+<form method="POST">
+    <input type="text" name="name" placeholder="Topic name" required>
+    <br><br>
+
+    <select name="subject_id" required>
+        <option value="">Select Subject</option>
+        {% for subject in subjects %}
+            <option value="{{ subject.id }}">
+                {{ subject.name }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <br><br>
+    <button type="submit">Add Topic</button>
+</form>
+
+</body>
+</html>
