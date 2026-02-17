@@ -1,15 +1,15 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Generate Study Plan</title>
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}Generate Plan{% endblock %}
+
+{% block content %}
 
 <h2>Generate Study Plan</h2>
 
 <form method="POST">
-    <button type="submit">Generate Plan</button>
+    <button type="submit" class="btn btn-dark">
+        Generate Plan
+    </button>
 </form>
 
-</body>
-</html>
+{% endblock %}

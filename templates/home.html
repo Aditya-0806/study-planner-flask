@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome{% endblock %}
+
+{% block content %}
+
+<div class="text-center mt-5">
+
+    <h1 class="display-4 fw-bold mb-3">
+        📘 Welcome to Prepify
+    </h1>
+
+    <p class="lead mb-4">
+        Your Smart Study Planner for Organized & Efficient Preparation
+    </p>
+
+    <div class="mt-4">
+        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg me-3">
+            Register
+        </a>
+
+        <a href="{{ url_for('login') }}" class="btn btn-outline-dark btn-lg">
+            Sign In
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}

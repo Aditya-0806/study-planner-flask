@@ -1,7 +1,9 @@
-from flask import Flask,redirect, url_for
+from flask import Flask,redirect, url_for,session, flash
 from flask import request, render_template
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date, timedelta,datetime
+from werkzeug.security import generate_password_hash, check_password_hash
+
 
 
 
@@ -13,11 +15,13 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///studyplanner.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+app.config['SECRET_KEY'] = 'supersecretkey'
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
 
     def __repr__(self):
         return f"<User {self.email}>"
@@ -88,16 +92,89 @@ class StudyTask(db.Model):
 
 
 
+
 @app.route("/")
 def home():
-    return "Flask app running with database"
+    if session.get("user_id"):
+        return redirect(url_for("dashboard"))
+    return render_template("home.html")
+
+
+
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        name = request.form["name"]
+        email = request.form["email"]
+        password = request.form["password"]
+
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            return render_template("register.html", error="User already exists")
+
+        hashed_password = generate_password_hash(password)
+
+        user = User(
+            name=name,
+            email=email,
+            password=hashed_password
+        )
+
+        db.session.add(user)
+        db.session.commit()
+
+        session["user_id"] = user.id
+
+        return redirect(url_for("add_study_time"))
+
+    return render_template("register.html")
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+
+        user = User.query.filter_by(email=email).first()
+
+        if not user or not check_password_hash(user.password, password):
+            return "Invalid credentials"
+
+        if not user:
+            return "Invalid credentials"
+
+        session["user_id"] = user.id
+        return redirect(url_for("dashboard"))
+
+    return '''
+        <h2>Login</h2>
+        <form method="POST">
+            <input name="email" placeholder="Email" required><br><br>
+            <input name="password" type="password" placeholder="Password" required><br><br>
+            <button type="submit">Login</button>
+        </form>
+    '''
+
+@app.route("/logout")
+def logout():
+    session.pop("user_id", None)
+    return redirect(url_for("login"))
+
 
 @app.route("/add-user")
 def add_user():
-    user = User(name="Aditya", email="aditya@gmail.com")
-    db.session.add(user)
-    db.session.commit()
-    return "User added successfully"
+    class User(db.Model):
+        id = db.Column(db.Integer, primary_key=True)
+        name = db.Column(db.String(100), nullable=False)
+        email = db.Column(db.String(100), unique=True, nullable=False)
+        password = db.Column(db.String(200), nullable=False)
+
+        def __repr__(self):
+            return f"<User {self.email}>"
+
 
 @app.route("/users")
 def get_users():
@@ -108,14 +185,19 @@ def get_users():
         data.append({
             "id": u.id,
             "name": u.name,
-            "email": u.email
+            "email": u.email,
+            
         })
 
     return data
 
 @app.route("/add-subject", methods=["GET", "POST"])
 def add_subject():
-    user = User.query.first()  # temporary user
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("login"))
+
+    user = User.query.get(user_id)
 
     if request.method == "POST":
         name = request.form["name"]
@@ -124,16 +206,10 @@ def add_subject():
         db.session.add(subject)
         db.session.commit()
 
-        return f"Subject '{name}' added successfully"
+        flash("Subject added successfully!", "success")
 
-    return '''
-        <h2>Add Subject</h2>
-        <form method="POST">
-            <input type="text" name="name" placeholder="Subject name" required>
-            <br><br>
-            <button type="submit">Add Subject</button>
-        </form>
-    '''
+    return render_template("add_subject.html")
+
 
 
 @app.route("/subjects")
@@ -152,19 +228,50 @@ def get_subjects():
 
 @app.route("/add-topic", methods=["GET", "POST"])
 def add_topic():
-    subjects = Subject.query.all()
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("login"))
+
+    subjects = Subject.query.filter_by(user_id=user_id).all()
 
     if request.method == "POST":
-        name = request.form["name"]
-        subject_id = request.form["subject_id"]
+        subject_id = request.form.get("subject_id")
+        topics_input = request.form.get("topic_names")
 
-        topic = Topic(name=name, subject_id=subject_id)
-        db.session.add(topic)
+        if not subject_id or not topics_input:
+            flash("Please select subject and enter topics.", "danger")
+            return redirect(url_for("add_topic"))
+
+        # Split by comma
+        topic_list = topics_input.split(",")
+
+        added_count = 0
+
+        for topic_name in topic_list:
+            cleaned_name = topic_name.strip()
+
+            if cleaned_name:
+                # Avoid duplicates
+                existing_topic = Topic.query.filter_by(
+                    name=cleaned_name,
+                    subject_id=subject_id
+                ).first()
+
+                if not existing_topic:
+                    new_topic = Topic(
+                        name=cleaned_name,
+                        subject_id=subject_id
+                    )
+                    db.session.add(new_topic)
+                    added_count += 1
+
         db.session.commit()
 
-        return f"Topic '{name}' added successfully"
+        flash(f"{added_count} topic(s) added successfully!", "success")
+        return redirect(url_for("dashboard"))
 
     return render_template("add_topic.html", subjects=subjects)
+
 
 
 
@@ -201,7 +308,7 @@ def add_exam():
             db.session.add(exam)
 
         db.session.commit()
-        return "Exam date saved successfully"
+        flash("Date added successfully!", "success")
 
     return render_template("add_exam.html", subjects=subjects)
 
@@ -221,7 +328,11 @@ def get_exams():
 
 @app.route("/add-study-time", methods=["GET", "POST"])
 def add_study_time():
-    user = User.query.first()  # temporary
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("login"))
+
+    user = User.query.get(user_id)
 
     if request.method == "POST":
         hours_per_day = float(request.form["hours_per_day"])
@@ -241,7 +352,7 @@ def add_study_time():
             db.session.add(study_time)
 
         db.session.commit()
-        return "Study time saved successfully"
+        flash("Study-Time added successfully!", "success")
 
     return render_template("add_study_time.html")
 
@@ -264,7 +375,11 @@ def get_study_time():
 @app.route("/generate-plan", methods=["GET", "POST"])
 def generate_plan():
     if request.method == "POST":
-        user = User.query.first()
+        user_id = session.get("user_id")
+        if not user_id:
+            return redirect(url_for("login"))
+
+        user = User.query.get(user_id)
         today = date.today()
 
         study_time = StudyTime.query.filter_by(user_id=user.id).first()
@@ -314,7 +429,7 @@ def generate_plan():
                 tasks_today += 1
 
         db.session.commit()
-        return "Smart study plan generated successfully"
+        flash("Plan generated successfully!", "success")
 
     return render_template("generate_plan.html")
 
@@ -334,9 +449,25 @@ def view_tasks():
 
     return data
 
+@app.route("/tasks/all")
+def all_tasks():
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("login"))
+
+    tasks = StudyTask.query.filter_by(user_id=user_id)\
+        .order_by(StudyTask.task_date).all()
+
+    return render_template("all_tasks.html", tasks=tasks)
+
+
 @app.route("/tasks/today")
 def today_tasks():
-    user = User.query.first()
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("login"))
+
+    user = User.query.get(user_id)
     today = date.today()
 
     tasks = StudyTask.query.filter_by(
@@ -345,6 +476,29 @@ def today_tasks():
     ).all()
 
     return render_template("today_tasks.html", tasks=tasks)
+
+@app.route("/tasks/update", methods=["POST"])
+def bulk_complete_tasks():
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("login"))
+
+    selected_tasks = request.form.getlist("completed_tasks")
+
+    # Reset all tasks first
+    user_tasks = StudyTask.query.filter_by(user_id=user_id).all()
+    for task in user_tasks:
+        task.is_completed = False
+
+    # Mark selected ones as completed
+    for task_id in selected_tasks:
+        task = StudyTask.query.get(int(task_id))
+        if task and task.user_id == user_id:
+            task.is_completed = True
+
+    db.session.commit()
+
+    return redirect(url_for("all_tasks"))
 
 
 @app.route("/complete-task/<int:task_id>")
@@ -391,20 +545,40 @@ def auto_reschedule():
 
 @app.route("/dashboard")
 def dashboard():
-    user = User.query.first()
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("login"))
+
+    user = User.query.get(user_id)
     today = date.today()
 
     tasks = StudyTask.query.filter_by(user_id=user.id).all()
 
     total_tasks = len(tasks)
-    completed_tasks = sum(1 for t in tasks if t.is_completed)
-    pending_tasks = total_tasks - completed_tasks
-    missed_tasks = sum(1 for t in tasks if t.task_date < today and not t.is_completed)
+    completed_tasks = 0
+    pending_tasks = 0
+    missed_tasks = 0
+    today_tasks = 0
+    upcoming_tasks = 0
+
+    for task in tasks:
+        if task.is_completed:
+            completed_tasks += 1
+        else:
+            pending_tasks += 1
+
+            if task.task_date < today:
+                missed_tasks += 1
+            elif task.task_date == today:
+                today_tasks += 1
+            else:
+                upcoming_tasks += 1
 
     completion_percentage = (
         (completed_tasks / total_tasks) * 100 if total_tasks else 0
     )
 
+    # Subject Progress
     subject_progress = {}
 
     for task in tasks:
@@ -423,22 +597,72 @@ def dashboard():
             (completed / total) * 100 if total else 0, 2
         )
 
+    # -------------------------
+    # Progress Prediction
+    # -------------------------
+
+    prediction_message = None
+    predicted_finish = None  # IMPORTANT: define outside
+
+    if completed_tasks > 0:
+        first_task = StudyTask.query.filter_by(user_id=user.id)\
+            .order_by(StudyTask.task_date).first()
+
+        if first_task:
+            days_passed = (today - first_task.task_date).days + 1
+
+            if days_passed > 0:
+                avg_tasks_per_day = completed_tasks / days_passed
+                remaining_tasks = total_tasks - completed_tasks
+
+                if avg_tasks_per_day > 0 and remaining_tasks > 0:
+                    predicted_days = remaining_tasks / avg_tasks_per_day
+                    predicted_finish = today + timedelta(days=int(predicted_days))
+
+                    prediction_message = (
+                        f"At current pace, you will finish by "
+                        f"{predicted_finish.strftime('%Y-%m-%d')}"
+                    )
+
+    # -------------------------
+    # Exam Check
+    # -------------------------
+
+    exam = Exam.query.join(Subject).filter(
+        Subject.user_id == user.id
+    ).order_by(Exam.exam_date).first()
+
+    status_message = None
+    status_type = None
+
+    if predicted_finish and exam:
+        if predicted_finish <= exam.exam_date:
+            status_message = "You are on track to complete before the exam."
+            status_type = "success"
+        else:
+            status_message = "You may not finish before the exam. Consider increasing study time."
+            status_type = "danger"
+
     return render_template(
         "dashboard.html",
         total_tasks=total_tasks,
         completed_tasks=completed_tasks,
         pending_tasks=pending_tasks,
         missed_tasks=missed_tasks,
+        today_tasks=today_tasks,
+        upcoming_tasks=upcoming_tasks,
         completion_percentage=round(completion_percentage, 2),
-        subject_progress=subject_progress
+        subject_progress=subject_progress,
+        prediction_message=prediction_message,
+        status_message=status_message,
+        status_type=status_type
     )
 
 
 
 
+
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)
-
-with app.app_context():
-    db.create_all()
-

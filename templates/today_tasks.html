@@ -1,34 +1,29 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Today's Tasks</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-<h2>📅 Today's Study Tasks</h2>
+{% block title %}Today Tasks{% endblock %}
+
+{% block content %}
+
+<h2>Today's Tasks</h2>
 
 {% if tasks %}
-    <ul>
-        {% for task in tasks %}
-            <li>
-                <strong>{{ task.subject.name }}</strong> —
-                {{ task.topic.name }}
+    {% for task in tasks %}
+        <div class="card mb-3 p-3">
+            <strong>{{ task.subject.name }}</strong><br>
+            {{ task.topic.name }}
 
-                {% if not task.is_completed %}
-                    <form method="GET"
-                          action="/complete-task/{{ task.id }}"
-                          style="display:inline;">
-                        <button type="submit">Mark Completed</button>
-                    </form>
-                {% else %}
-                    ✅ Completed
-                {% endif %}
-            </li>
-        {% endfor %}
-    </ul>
+            {% if not task.is_completed %}
+                <a href="{{ url_for('complete_task', task_id=task.id) }}"
+                   class="btn btn-sm btn-success mt-2">
+                   Mark Complete
+                </a>
+            {% else %}
+                <span class="text-success">Completed</span>
+            {% endif %}
+        </div>
+    {% endfor %}
 {% else %}
     <p>No tasks for today 🎉</p>
 {% endif %}
 
-</body>
-</html>
+{% endblock %}

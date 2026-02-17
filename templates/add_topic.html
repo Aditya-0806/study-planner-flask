@@ -1,28 +1,55 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Add Topic</title>
-</head>
-<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+            Prepify
+        </a>
 
-<h2>Add Topic</h2>
+        <div>
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
-<form method="POST">
-    <input type="text" name="name" placeholder="Topic name" required>
-    <br><br>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('dashboard') }}">
+                        Dashboard
+                    </a>
+                </li>
 
-    <select name="subject_id" required>
-        <option value="">Select Subject</option>
-        {% for subject in subjects %}
-            <option value="{{ subject.id }}">
-                {{ subject.name }}
-            </option>
-        {% endfor %}
-    </select>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('add_subject') }}">
+                        Add Subject
+                    </a>
+                </li>
 
-    <br><br>
-    <button type="submit">Add Topic</button>
-</form>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('add_topic') }}">
+                        Add Topic
+                    </a>
+                </li>
 
-</body>
-</html>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('add_exam') }}">
+                        Add Exam
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('today_tasks') }}">
+                        Today
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('all_tasks') }}">
+                        All Tasks
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link text-danger" href="{{ url_for('logout') }}">
+                        Logout
+                    </a>
+                </li>
+
+            </ul>
+        </div>
+    </div>
+</nav>
