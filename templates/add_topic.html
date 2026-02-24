@@ -1,55 +1,49 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="{{ url_for('dashboard') }}">
-            Prepify
-        </a>
+{% extends "base.html" %}
+{% block title %}Add Topic{% endblock %}
 
-        <div>
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+{% block content %}
 
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('dashboard') }}">
-                        Dashboard
-                    </a>
-                </li>
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card p-4 shadow-sm">
 
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('add_subject') }}">
-                        Add Subject
-                    </a>
-                </li>
+            <h4 class="mb-4">Add Topics</h4>
 
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('add_topic') }}">
-                        Add Topic
-                    </a>
-                </li>
+            <form method="POST">
 
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('add_exam') }}">
-                        Add Exam
-                    </a>
-                </li>
+                <div class="mb-3">
+                    <label class="form-label">Select Subject</label>
+                    <select name="subject_id"
+                            class="form-select"
+                            required>
+                        {% for subject in subjects %}
+                            <option value="{{ subject.id }}">
+                                {{ subject.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('today_tasks') }}">
-                        Today
-                    </a>
-                </li>
+                <div class="mb-3">
+                    <label class="form-label">
+                        Enter Topics (comma separated)
+                    </label>
+                    <input type="text"
+                           name="topic_names"
+                           class="form-control"
+                           placeholder="Arrays, Linked List, Trees"
+                           required>
+                </div>
 
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('all_tasks') }}">
-                        All Tasks
-                    </a>
-                </li>
+                <button type="submit"
+                        class="btn btn-success w-100">
+                    Add Topics
+                </button>
 
-                <li class="nav-item">
-                    <a class="nav-link text-danger" href="{{ url_for('logout') }}">
-                        Logout
-                    </a>
-                </li>
+            </form>
 
-            </ul>
         </div>
     </div>
-</nav>
+</div>
+
+{% endblock %}

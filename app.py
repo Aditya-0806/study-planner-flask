@@ -3,7 +3,7 @@ from flask import request, render_template
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date, timedelta,datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from utils.youtube_helper import get_top_videos
 
 
 
@@ -140,23 +140,14 @@ def login():
 
         user = User.query.filter_by(email=email).first()
 
-        if not user or not check_password_hash(user.password, password):
-            return "Invalid credentials"
+        if user and check_password_hash(user.password, password):
+            session["user_id"] = user.id
+            return redirect(url_for("dashboard"))
+        else:
+            flash("Invalid credentials", "danger")
+            return redirect(url_for("login"))
 
-        if not user:
-            return "Invalid credentials"
-
-        session["user_id"] = user.id
-        return redirect(url_for("dashboard"))
-
-    return '''
-        <h2>Login</h2>
-        <form method="POST">
-            <input name="email" placeholder="Email" required><br><br>
-            <input name="password" type="password" placeholder="Password" required><br><br>
-            <button type="submit">Login</button>
-        </form>
-    '''
+    return render_template("login.html")
 
 @app.route("/logout")
 def logout():
@@ -288,6 +279,15 @@ def get_topics():
         })
 
     return data
+
+@app.route("/topic/<int:topic_id>")
+def topic_detail(topic_id):
+    topic = Topic.query.get_or_404(topic_id)
+
+    from utils.youtube_helper import get_top_videos
+    videos = get_top_videos(topic.name)
+
+    return render_template("topic_detail.html", topic=topic, videos=videos)
 
 @app.route("/add-exam", methods=["GET", "POST"])
 def add_exam():
@@ -475,7 +475,27 @@ def today_tasks():
         task_date=today
     ).all()
 
-    return render_template("today_tasks.html", tasks=tasks)
+    # -------------------------
+    # YouTube Integration
+    # -------------------------
+    from utils.youtube_helper import get_top_videos
+
+    videos_map = {}
+
+    for task in tasks:
+        topic_id = task.topic.id
+
+        if topic_id not in videos_map:
+            try:
+                videos_map[topic_id] = get_top_videos(task.topic.name)
+            except:
+                videos_map[topic_id] = []
+
+    return render_template(
+        "today_tasks.html",
+        tasks=tasks,
+        videos_map=videos_map
+    )
 
 @app.route("/tasks/update", methods=["POST"])
 def bulk_complete_tasks():
@@ -578,7 +598,10 @@ def dashboard():
         (completed_tasks / total_tasks) * 100 if total_tasks else 0
     )
 
+    # -------------------------
     # Subject Progress
+    # -------------------------
+
     subject_progress = {}
 
     for task in tasks:
@@ -602,7 +625,7 @@ def dashboard():
     # -------------------------
 
     prediction_message = None
-    predicted_finish = None  # IMPORTANT: define outside
+    predicted_finish = None
 
     if completed_tasks > 0:
         first_task = StudyTask.query.filter_by(user_id=user.id)\
@@ -643,6 +666,59 @@ def dashboard():
             status_message = "You may not finish before the exam. Consider increasing study time."
             status_type = "danger"
 
+    # -------------------------
+    # YouTube Videos for Today's Tasks
+    # -------------------------
+
+    from utils.youtube_helper import get_top_videos
+
+    videos_map = {}
+
+    today_task_objects = [
+        task for task in tasks if task.task_date == today
+    ]
+
+    for task in today_task_objects:
+        topic_id = task.topic.id
+
+        if topic_id not in videos_map:
+            try:
+                videos_map[topic_id] = get_top_videos(task.topic.name)
+            except:
+                videos_map[topic_id] = []
+
+    return render_template(
+        "dashboard.html",
+        user=user,
+        total_tasks=total_tasks,
+        completed_tasks=completed_tasks,
+        pending_tasks=pending_tasks,
+        missed_tasks=missed_tasks,
+        today_tasks=today_tasks,
+        upcoming_tasks=upcoming_tasks,
+        completion_percentage=completion_percentage,
+        subject_progress=subject_progress,
+        prediction_message=prediction_message,
+        status_message=status_message,
+        status_type=status_type,
+        videos_map=videos_map
+    )
+
+
+
+
+
+
+    videos_map = {}
+
+    for task in today_tasks:
+        topic_id = task.topic.id
+    
+    if topic_id not in videos_map:
+        videos_map[topic_id] = get_top_videos(task.topic.name)
+
+
+
     return render_template(
         "dashboard.html",
         total_tasks=total_tasks,
@@ -666,3 +742,40 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()
     app.run(debug=True)
+
+
+
+
+
+
+
+
+             
+                         
+                                          
+                                                           
+
+
+
+
+
+
+
+
+
+
+ 
+  
+   
+     
+
+      
+
+       
+
+        
+          
+           
+            
+
+             

@@ -1,29 +1,76 @@
 {% extends "base.html" %}
-
-{% block title %}Today Tasks{% endblock %}
+{% block title %}Today's Tasks - Prepify{% endblock %}
 
 {% block content %}
 
-<h2>Today's Tasks</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold">Today's Tasks</h2>
+        <p class="text-muted mb-0">Focus on what matters today</p>
+    </div>
+</div>
 
 {% if tasks %}
-    {% for task in tasks %}
-        <div class="card mb-3 p-3">
-            <strong>{{ task.subject.name }}</strong><br>
-            {{ task.topic.name }}
 
-            {% if not task.is_completed %}
-                <a href="{{ url_for('complete_task', task_id=task.id) }}"
-                   class="btn btn-sm btn-success mt-2">
-                   Mark Complete
-                </a>
-            {% else %}
-                <span class="text-success">Completed</span>
-            {% endif %}
-        </div>
-    {% endfor %}
+<form method="POST" action="{{ url_for('bulk_complete_tasks') }}">
+
+    <div class="card p-4">
+
+        {% for task in tasks %}
+            <div class="border-bottom py-3">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <div class="form-check">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               name="completed_tasks"
+                               value="{{ task.id }}"
+                               id="task{{ task.id }}"
+                               {% if task.is_completed %}checked{% endif %}>
+
+                        <label class="form-check-label fw-semibold"
+                               for="task{{ task.id }}">
+                            {{ task.subject.name }} — {{ task.topic.name }}
+                        </label>
+                    </div>
+
+                    <span class="badge bg-light text-dark">
+                        {{ task.task_date }}
+                    </span>
+
+                </div>
+
+                <!-- 🔥 YouTube Links Section -->
+                {% if videos_map.get(task.topic.id) %}
+                <div class="mt-2 ms-4">
+                    {% for video in videos_map[task.topic.id] %}
+                        <a href="{{ video.url }}"
+                           target="_blank"
+                           class="small text-decoration-none d-block text-primary">
+                            ▶ {{ video.title }}
+                        </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary mt-3">
+            Update Progress
+        </button>
+
+    </div>
+
+</form>
+
 {% else %}
-    <p>No tasks for today 🎉</p>
+
+<div class="card p-4 text-center">
+    <h5 class="text-muted">No tasks scheduled for today 🎉</h5>
+</div>
+
 {% endif %}
 
 {% endblock %}

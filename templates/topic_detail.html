@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ topic.name }}</title>
+</head>
+<body>
+
+<h2>Topic: {{ topic.name }}</h2>
+
+<h3>Recommended YouTube Videos</h3>
+
+{% if videos %}
+    {% for video in videos %}
+        <div style="margin-bottom:20px;">
+            <img src="{{ video.thumbnail }}" width="250">
+            <h4>{{ video.title }}</h4>
+            <a href="{{ video.url }}" target="_blank">Watch Video</a>
+        </div>
+        <hr>
+    {% endfor %}
+{% else %}
+    <p>No videos found.</p>
+{% endif %}
+
+</body>
+</html>

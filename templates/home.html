@@ -1,27 +1,62 @@
 {% extends "base.html" %}
-
-{% block title %}Welcome{% endblock %}
+{% block title %}Prepify - Plan Smart. Study Better.{% endblock %}
 
 {% block content %}
 
-<div class="text-center mt-5">
+<div class="text-center py-5">
 
-    <h1 class="display-4 fw-bold mb-3">
-        📘 Welcome to Prepify
+    <h1 class="fw-bold mb-3" style="font-size: 2.8rem;">
+        Plan Smart. Study Better.
     </h1>
 
-    <p class="lead mb-4">
-        Your Smart Study Planner for Organized & Efficient Preparation
+    <p class="text-muted mb-4" style="font-size: 1.2rem;">
+        Prepify helps you organize subjects, generate intelligent study plans,
+        track progress, and stay ahead of exams.
     </p>
 
-    <div class="mt-4">
+    {% if not session.get("user_id") %}
         <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg me-3">
-            Register
+            Get Started
         </a>
 
-        <a href="{{ url_for('login') }}" class="btn btn-outline-dark btn-lg">
+        <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">
             Sign In
         </a>
+    {% else %}
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">
+            Go to Dashboard
+        </a>
+    {% endif %}
+
+</div>
+
+<div class="row text-center mt-5">
+
+    <div class="col-md-4">
+        <div class="card p-4">
+            <h5>📅 Smart Scheduling</h5>
+            <p class="text-muted">
+                Automatically generate study plans based on exam dates and topics.
+            </p>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card p-4">
+            <h5>📊 Progress Tracking</h5>
+            <p class="text-muted">
+                Monitor completion rates and subject-wise performance.
+            </p>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card p-4">
+            <h5>⚡ Predictive Insights</h5>
+            <p class="text-muted">
+                Know whether you're on track before exams.
+            </p>
+        </div>
     </div>
 
 </div>
