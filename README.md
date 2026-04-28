@@ -27,8 +27,6 @@ Prepify/
 │── routes/          # Application routes
 │── instance/        # Database files
 ⚙️ Installation & Setup
-# Clone the repository
-git clone https://github.com/your-username/prepify.git
 
 # Go to project folder
 cd prepify
